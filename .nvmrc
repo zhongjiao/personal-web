@@ -1,0 +1,2 @@
+# 锁定 Node 版本（搭配 nvm-windows / fnm / volta 使用）
+20.18.0

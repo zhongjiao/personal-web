@@ -1,0 +1,92 @@
+/* CSS Modules：所有类名仅作用于本组件，不会泄漏到全局 */
+
+.side {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-foreground);
+  word-wrap: break-word;
+}
+
+.side h1,
+.side h2,
+.side h3,
+.side h4 {
+  margin: 1.2em 0 0.6em;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+.side h1 {
+  font-size: 1.6em;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.3em;
+}
+.side h2 {
+  font-size: 1.35em;
+}
+.side h3 {
+  font-size: 1.15em;
+}
+.side p {
+  margin: 0.6em 0;
+}
+.side ul,
+.side ol {
+  padding-left: 1.6em;
+  margin: 0.6em 0;
+}
+.side li {
+  margin: 0.2em 0;
+}
+.side blockquote {
+  margin: 0.8em 0;
+  padding: 0.4em 1em;
+  border-left: 4px solid var(--color-border);
+  color: var(--color-muted-foreground);
+  background: var(--color-muted);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.side table {
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  width: 100%;
+}
+.side th,
+.side td {
+  border: 1px solid var(--color-border);
+  padding: 6px 10px;
+  text-align: left;
+}
+.side th {
+  background: var(--color-muted);
+  font-weight: 600;
+}
+.side strong {
+  font-weight: 600;
+}
+.side em {
+  font-style: italic;
+}
+
+.side ins {
+  background: oklch(0.92 0.13 150);
+  color: oklch(0.3 0.18 150);
+  text-decoration: none;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+.side del {
+  background: oklch(0.92 0.13 25);
+  color: oklch(0.4 0.2 25);
+  text-decoration: line-through;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+:global(.dark) .side ins {
+  background: oklch(0.35 0.15 150);
+  color: oklch(0.95 0.13 150);
+}
+:global(.dark) .side del {
+  background: oklch(0.35 0.18 25);
+  color: oklch(0.92 0.13 25);
+}

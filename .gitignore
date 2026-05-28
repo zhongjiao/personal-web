@@ -7,3 +7,8 @@ build/
 .DS_Store
 .vscode/
 .idea/
+
+# TypeScript 构建产物
+*.tsbuildinfo
+client/vite.config.d.ts
+client/vite.config.js
