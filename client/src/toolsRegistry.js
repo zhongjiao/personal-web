@@ -3,7 +3,7 @@ export const tools = [
   {
     id: 'diff',
     name: '代码差异对比',
-    description: '基于 Monaco Editor 的代码/文本差异对比工具，支持本地文件对比与 API 数据对比',
+    description: '基于 Monaco Editor 的差异对比工具，支持 文本/代码、DOCX、PDF 文件，亦可通过 API 数据对比',
     path: '/tools/diff',
     icon: 'D'
   }

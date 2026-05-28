@@ -13,9 +13,11 @@
 
 ## 已实现工具
 
-- **代码差异对比工具 (Diff Tool)**：基于 Monaco Editor
-  - 支持选择两个本地文件进行前后差异对比
-  - 支持通过 API 接收外部数据进行差异对比
+- **差异对比工具 (Diff Tool)**：基于 Monaco Editor
+  - 支持选择两个本地文件进行差异对比
+  - 文件类型：文本/代码（txt/md/json/js/...）、**DOCX**、**PDF**
+  - `.doc` 旧格式：建议先另存为 `.docx`（前端会给提示）
+  - 也可通过 API 接收外部数据进行差异对比
 
 ## 快速开始
 
@@ -63,6 +65,21 @@ Content-Type: application/json
 ```
 
 随后前端访问 `http://localhost:5173/tools/diff?id=xxx` 即可载入数据对比。
+
+### 文件上传转纯文本（DOCX / PDF）
+
+前端选择 docx/pdf 时已在浏览器内直接解析。你也可以通过后端接口转换：
+
+```bash
+curl -X POST http://localhost:3001/api/diff/extract \
+  -F "file=@/path/to/your.docx"
+```
+
+返回：
+
+```json
+{ "success": true, "data": { "filename": "your.docx", "kind": "docx", "text": "...", "size": 12345 } }
+```
 
 ### 获取已推送的数据
 

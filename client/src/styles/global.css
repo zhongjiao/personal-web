@@ -230,6 +230,18 @@ button {
   font-size: 13px;
 }
 
+.banner.info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.banner.warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
 .banner.error {
   background: #fef2f2;
   border-color: #fecaca;
@@ -240,4 +252,9 @@ button {
   background: #f0fdf4;
   border-color: #bbf7d0;
   color: #166534;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

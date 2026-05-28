@@ -1,43 +1,32 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DiffEditor } from '@monaco-editor/react';
+import { parseFile, detectLanguage } from '../utils/fileParser.js';
 
 const LANGUAGES = [
   'plaintext', 'javascript', 'typescript', 'json', 'html', 'css',
   'markdown', 'python', 'java', 'go', 'sql', 'xml', 'yaml', 'shell'
 ];
 
-// 简单根据扩展名推断语言
-function detectLang(filename = '') {
-  const ext = filename.split('.').pop().toLowerCase();
-  const map = {
-    js: 'javascript', jsx: 'javascript', mjs: 'javascript', cjs: 'javascript',
-    ts: 'typescript', tsx: 'typescript',
-    json: 'json',
-    html: 'html', htm: 'html',
-    css: 'css', scss: 'css', less: 'css',
-    md: 'markdown', markdown: 'markdown',
-    py: 'python',
-    java: 'java',
-    go: 'go',
-    sql: 'sql',
-    xml: 'xml',
-    yml: 'yaml', yaml: 'yaml',
-    sh: 'shell', bash: 'shell'
-  };
-  return map[ext] || 'plaintext';
-}
+// 文件选择 accept：文本类 + docx/pdf/doc
+const FILE_ACCEPT = [
+  '.txt', '.md', '.json', '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs',
+  '.html', '.htm', '.css', '.scss', '.less', '.xml', '.yml', '.yaml',
+  '.py', '.java', '.go', '.sql', '.sh', '.csv', '.log',
+  '.doc', '.docx', '.pdf'
+].join(',');
 
 export default function DiffTool() {
   const [searchParams] = useSearchParams();
   const apiId = searchParams.get('id');
 
-  const [original, setOriginal] = useState('// 原始内容（左侧）\n// 选择本地文件，或通过 API /api/diff/push 推送数据\n');
+  const [original, setOriginal] = useState('// 原始内容（左侧）\n// 支持 txt / md / 代码 / docx / pdf 等格式\n');
   const [modified, setModified] = useState('// 修改后内容（右侧）\n');
   const [language, setLanguage] = useState('javascript');
   const [originalName, setOriginalName] = useState('');
   const [modifiedName, setModifiedName] = useState('');
   const [banner, setBanner] = useState(null); // { type, message }
+  const [loading, setLoading] = useState(false);
 
   const originalInputRef = useRef(null);
   const modifiedInputRef = useRef(null);
@@ -64,44 +53,36 @@ export default function DiffTool() {
       });
   }, [apiId]);
 
-  const readFile = useCallback((file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ''));
-      reader.onerror = () => reject(reader.error);
-      reader.readAsText(file);
-    });
-  }, []);
-
-  const handlePickOriginal = async (e) => {
+  const handlePick = async (e, side) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setLoading(true);
+    setBanner({ type: 'info', message: `正在解析 ${file.name} ...` });
     try {
-      const text = await readFile(file);
-      setOriginal(text);
-      setOriginalName(file.name);
-      setLanguage(detectLang(file.name));
-      setBanner({ type: 'success', message: `已加载原始文件：${file.name}` });
+      const { text, language: lang, kind, warning } = await parseFile(file);
+      if (side === 'original') {
+        setOriginal(text);
+        setOriginalName(file.name);
+        // docx/pdf 不覆盖语言为 plaintext，除非当前是 plaintext / 用户首次上传
+        if (kind === 'text') setLanguage(lang);
+        else if (!modifiedName) setLanguage('plaintext');
+      } else {
+        setModified(text);
+        setModifiedName(file.name);
+        if (kind === 'text' && !originalName) setLanguage(lang);
+        else if (!originalName) setLanguage('plaintext');
+      }
+      const tag = kind === 'docx' ? '[DOCX]' : kind === 'pdf' ? '[PDF]' : kind === 'doc' ? '[DOC]' : '';
+      setBanner({
+        type: warning ? 'warning' : 'success',
+        message: warning
+          ? `${file.name}：${warning}`
+          : `已加载 ${tag} ${file.name}（${kind === 'text' ? '文本' : '已转纯文本'}）`
+      });
     } catch (err) {
-      setBanner({ type: 'error', message: '读取文件失败：' + err.message });
+      setBanner({ type: 'error', message: `解析失败：${err.message || err}` });
     } finally {
-      e.target.value = '';
-    }
-  };
-
-  const handlePickModified = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const text = await readFile(file);
-      setModified(text);
-      setModifiedName(file.name);
-      // 只有原始未推断语言时才用修改文件推断
-      if (!originalName) setLanguage(detectLang(file.name));
-      setBanner({ type: 'success', message: `已加载修改文件：${file.name}` });
-    } catch (err) {
-      setBanner({ type: 'error', message: '读取文件失败：' + err.message });
-    } finally {
+      setLoading(false);
       e.target.value = '';
     }
   };
@@ -147,24 +128,40 @@ export default function DiffTool() {
       <div className="diff-toolbar">
         <div className="group">
           <span className="group-label">原始：</span>
-          <button className="btn" onClick={() => originalInputRef.current?.click()}>选择本地文件</button>
+          <button
+            className="btn"
+            disabled={loading}
+            onClick={() => originalInputRef.current?.click()}
+            title="支持 txt / md / 代码 / docx / pdf"
+          >
+            选择本地文件
+          </button>
           <input
             ref={originalInputRef}
             type="file"
+            accept={FILE_ACCEPT}
             style={{ display: 'none' }}
-            onChange={handlePickOriginal}
+            onChange={(e) => handlePick(e, 'original')}
           />
           {originalName && <span className="file-info">{originalName}</span>}
         </div>
 
         <div className="group">
           <span className="group-label">修改：</span>
-          <button className="btn" onClick={() => modifiedInputRef.current?.click()}>选择本地文件</button>
+          <button
+            className="btn"
+            disabled={loading}
+            onClick={() => modifiedInputRef.current?.click()}
+            title="支持 txt / md / 代码 / docx / pdf"
+          >
+            选择本地文件
+          </button>
           <input
             ref={modifiedInputRef}
             type="file"
+            accept={FILE_ACCEPT}
             style={{ display: 'none' }}
-            onChange={handlePickModified}
+            onChange={(e) => handlePick(e, 'modified')}
           />
           {modifiedName && <span className="file-info">{modifiedName}</span>}
         </div>
@@ -203,10 +200,10 @@ export default function DiffTool() {
             automaticLayout: true,
             minimap: { enabled: false },
             fontSize: 13,
-            scrollBeyondLastLine: false
+            scrollBeyondLastLine: false,
+            wordWrap: 'on'
           }}
           onMount={(editor) => {
-            // 监听 modified 编辑器变化
             editor.getModifiedEditor().onDidChangeModelContent(() => {
               setModified(editor.getModifiedEditor().getValue());
             });
