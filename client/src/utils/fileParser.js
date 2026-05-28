@@ -48,6 +48,48 @@ export function detectLanguage(filename = '') {
   return TEXT_EXT_LANG[ext] || 'plaintext';
 }
 
+// 通过内容启发式探测语言（在没有可靠扩展名时使用）
+export function detectLanguageByContent(text = '') {
+  const s = text.trimStart();
+  if (!s) return 'plaintext';
+
+  // JSON
+  if ((s.startsWith('{') || s.startsWith('[')) && /[}\]]\s*$/.test(text.trimEnd())) {
+    try { JSON.parse(text); return 'json'; } catch { /* not json */ }
+  }
+  // XML / HTML
+  if (s.startsWith('<?xml')) return 'xml';
+  if (/^<!doctype html/i.test(s) || /<html[\s>]/i.test(s)) return 'html';
+  if (/^<[a-zA-Z][\s\S]*>/.test(s) && /<\/[a-zA-Z]+>\s*$/.test(text.trimEnd())) return 'xml';
+  // Markdown
+  if (/^#{1,6}\s+\S/m.test(text) || /^\s*[-*+]\s+\S/m.test(text) || /\]\([^)]+\)/.test(text)) {
+    return 'markdown';
+  }
+  // YAML
+  if (/^---\s*$/m.test(text) && /^\s*\w[\w-]*:\s/m.test(text)) return 'yaml';
+  // Shell
+  if (/^#!.*\b(ba)?sh\b/.test(s)) return 'shell';
+  // Python
+  if (/^#!.*python/.test(s) || /^\s*(def |import |from )\S+/m.test(text)) return 'python';
+  // SQL
+  if (/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP)\b/i.test(s)) return 'sql';
+  // JS / TS（弱判断）
+  if (/\b(import\s.+from\s|export\s+(default|const|function)|require\(['"])/.test(text)) {
+    return /:\s*\w+(\[\])?\s*[=,)]/.test(text) ? 'typescript' : 'javascript';
+  }
+
+  return 'plaintext';
+}
+
+/**
+ * 综合推断：优先扩展名，扩展名未识别则按内容启发
+ */
+export function detectLanguageSmart(filename, text) {
+  const byName = detectLanguage(filename);
+  if (byName !== 'plaintext') return byName;
+  return detectLanguageByContent(text);
+}
+
 // 读取为 ArrayBuffer
 function readAsArrayBuffer(file) {
   return new Promise((resolve, reject) => {
