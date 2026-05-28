@@ -18,6 +18,10 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true
       }
+    },
+    // 不监听样例和构建产物
+    watch: {
+      ignored: ['**/samples/**', '**/dist/**', '**/node_modules/**']
     }
   }
 });

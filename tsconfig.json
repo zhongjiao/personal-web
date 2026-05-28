@@ -1,0 +1,19 @@
+{
+  "//": "根目录占位 tsconfig，告诉 IDE TS Server 排除 samples 等非源码目录。实际编译走 client/tsconfig.json。",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": false
+  },
+  "exclude": [
+    "node_modules",
+    "**/node_modules",
+    "samples",
+    "scripts",
+    "dist",
+    "build",
+    "client/dist",
+    "server/node_modules"
+  ],
+}
