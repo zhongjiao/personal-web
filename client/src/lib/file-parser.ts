@@ -1,9 +1,16 @@
 import mammoth from 'mammoth';
+import TurndownService from 'turndown';
 
 export type FileKind = 'text' | 'docx' | 'pdf' | 'doc';
 
 export interface ParsedFile {
+  /** 纯文本（去除所有格式） */
   text: string;
+  /** 保留格式的 HTML（仅 docx 提供） */
+  html?: string;
+  /** 由 HTML 转成的 Markdown（仅 docx 提供） */
+  markdown?: string;
+  /** Monaco 语言 */
   language: string;
   kind: FileKind;
   warning?: string;
@@ -94,10 +101,33 @@ function readAsText(file: File): Promise<string> {
   });
 }
 
-async function parseDocx(file: File): Promise<string> {
+async function parseDocx(file: File): Promise<{ text: string; html: string; markdown: string }> {
   const arrayBuffer = await readAsArrayBuffer(file);
-  const { value } = await mammoth.extractRawText({ arrayBuffer });
-  return value || '';
+  // 同时提取文本和 HTML（mammoth 内置 docx → html 转换，保留标题/列表/粗体/表格等结构）
+  const [{ value: text }, { value: html }] = await Promise.all([
+    mammoth.extractRawText({ arrayBuffer }),
+    mammoth.convertToHtml(
+      { arrayBuffer },
+      {
+        styleMap: [
+          "p[style-name='Title'] => h1:fresh",
+          "p[style-name='Heading 1'] => h1:fresh",
+          "p[style-name='Heading 2'] => h2:fresh",
+          "p[style-name='Heading 3'] => h3:fresh",
+          "p[style-name='Heading 4'] => h4:fresh",
+          "p[style-name='Quote'] => blockquote:fresh",
+          "b => strong",
+          "i => em"
+        ]
+      }
+    )
+  ]);
+
+  // HTML → Markdown
+  const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+  const markdown = td.turndown(html || '');
+
+  return { text: text || '', html: html || '', markdown };
 }
 
 async function parsePdf(file: File): Promise<string> {
@@ -128,8 +158,8 @@ async function parsePdf(file: File): Promise<string> {
 export async function parseFile(file: File): Promise<ParsedFile> {
   const ext = getExt(file.name);
   if (ext === 'docx') {
-    const text = await parseDocx(file);
-    return { text, language: 'plaintext', kind: 'docx' };
+    const { text, html, markdown } = await parseDocx(file);
+    return { text, html, markdown, language: 'plaintext', kind: 'docx' };
   }
   if (ext === 'pdf') {
     const text = await parsePdf(file);
