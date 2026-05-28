@@ -40,9 +40,9 @@ export function ThemeToggle() {
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
           onClick={() => setTheme(NEXT[theme])}
           aria-label="切换主题"
+          className="h-12 w-12 rounded-xl [&_svg]:size-6"
         >
           {ICONS[theme]}
         </Button>

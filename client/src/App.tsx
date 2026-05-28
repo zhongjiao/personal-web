@@ -15,14 +15,14 @@ export default function App() {
     <TooltipProvider delayDuration={150}>
       <div className="flex h-full bg-[var(--color-background)] text-[var(--color-foreground)]">
         {/* Sidebar */}
-        <aside className="w-16 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-card)] flex flex-col items-center py-3 gap-2">
+        <aside className="w-20 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-card)] flex flex-col items-center py-4 gap-3">
           <NavLink to="/" className="mb-2">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md">
-              <Boxes className="h-5 w-5" />
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md">
+              <Boxes className="h-6 w-6" />
             </div>
           </NavLink>
 
-          <Separator className="my-1 w-8" />
+          <Separator className="my-1 w-10" />
 
           <Tooltip>
             <TooltipTrigger asChild>
@@ -31,14 +31,14 @@ export default function App() {
                 end
                 className={({ isActive }) =>
                   cn(
-                    'h-10 w-10 rounded-lg flex items-center justify-center transition-colors',
+                    'h-12 w-12 rounded-xl flex items-center justify-center transition-colors',
                     isActive
                       ? 'bg-[var(--color-primary)] text-[var(--color-primary-foreground)]'
                       : 'text-[var(--color-muted-foreground)] hover:bg-[var(--color-accent)] hover:text-[var(--color-accent-foreground)]'
                   )
                 }
               >
-                <HomeIcon className="h-4 w-4" />
+                <HomeIcon className="h-7 w-7" />
               </NavLink>
             </TooltipTrigger>
             <TooltipContent side="right">首页</TooltipContent>
@@ -53,14 +53,14 @@ export default function App() {
                     to={tool.path}
                     className={({ isActive }) =>
                       cn(
-                        'h-10 w-10 rounded-lg flex items-center justify-center transition-colors',
+                        'h-12 w-12 rounded-xl flex items-center justify-center transition-colors',
                         isActive
                           ? 'bg-[var(--color-primary)] text-[var(--color-primary-foreground)]'
                           : 'text-[var(--color-muted-foreground)] hover:bg-[var(--color-accent)] hover:text-[var(--color-accent-foreground)]'
                       )
                     }
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-7 w-7" />
                   </NavLink>
                 </TooltipTrigger>
                 <TooltipContent side="right">{tool.name}</TooltipContent>
@@ -72,7 +72,11 @@ export default function App() {
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button asChild variant="ghost" size="icon">
+              <Button
+                asChild
+                variant="ghost"
+                className="h-12 w-12 rounded-xl [&_svg]:size-6"
+              >
                 <a
                   href="https://github.com/zhongjiao/personal-web"
                   target="_blank"
