@@ -2,15 +2,23 @@
   "name": "pmp-management",
   "version": "1.0.0",
   "private": true,
-  "description": "PMP 管理项目 - 工具集合平台",
+  "description": "PMP 管理项目 - 工具集合平台 (pnpm workspace)",
+  "packageManager": "pnpm@10.15.1",
   "scripts": {
-    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
-    "dev": "concurrently -k -n SERVER,CLIENT -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
-    "dev:server": "npm --prefix server run dev",
-    "dev:client": "npm --prefix client run dev",
-    "build": "npm --prefix client run build"
+    "install:all": "pnpm install",
+    "dev": "concurrently -k -n SERVER,CLIENT -c blue,green \"pnpm --filter pmp-server dev\" \"pnpm --filter pmp-client dev\"",
+    "dev:server": "pnpm --filter pmp-server dev",
+    "dev:client": "pnpm --filter pmp-client dev",
+    "build": "pnpm --filter pmp-client build",
+    "start:server": "pnpm --filter pmp-server start",
+    "clean": "pnpm -r exec rimraf node_modules && rimraf node_modules"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.10"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
   }
 }
