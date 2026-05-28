@@ -38,6 +38,20 @@ export default function DiffTool() {
   const modifiedInputRef = useRef(null);
   const diffEditorRef = useRef(null);
 
+  // 当 original/modified 变化时，主动写入编辑器并触发 layout
+  // （兼容部分场景下 props 变化未触发 model 更新的情况）
+  useEffect(() => {
+    const ed = diffEditorRef.current;
+    if (!ed) return;
+    const oModel = ed.getOriginalEditor().getModel();
+    const mModel = ed.getModifiedEditor().getModel();
+    if (oModel && oModel.getValue() !== original) oModel.setValue(original);
+    if (mModel && mModel.getValue() !== modified) mModel.setValue(modified);
+    requestAnimationFrame(() => {
+      try { ed.layout(); } catch {}
+    });
+  }, [original, modified]);
+
   // 从编辑器读取当前内容（编辑器是真实数据源，编辑后 React state 不会立即同步）
   const readEditorValues = () => {
     const ed = diffEditorRef.current;
@@ -244,12 +258,12 @@ export default function DiffTool() {
       <div className="diff-editor-wrap">
         <DiffEditor
           height="100%"
+          width="100%"
           language={effectiveLanguage}
           original={original}
           modified={modified}
           theme="vs-dark"
-          keepCurrentOriginalModel
-          keepCurrentModifiedModel
+          loading={<div style={{ color: '#9ca3af', padding: 24 }}>编辑器加载中…</div>}
           options={{
             renderSideBySide: true,
             originalEditable: true,
@@ -261,11 +275,23 @@ export default function DiffTool() {
             wordWrap: 'on'
           }}
           onMount={(editor) => {
-            // 保存 ref 以便后续读取（不再监听 onDidChangeModelContent，
-            // 避免外部 setState 写入 model 时反向触发 setState 造成竞态/闪烁）
             diffEditorRef.current = editor;
+            // 强制触发一次 layout，避免首次挂载时父容器尺寸未就绪
+            requestAnimationFrame(() => {
+              try { editor.layout(); } catch {}
+            });
           }}
         />
+      </div>
+      <div style={{
+        background: '#111827', color: '#9ca3af',
+        padding: '4px 20px', fontSize: 12,
+        borderTop: '1px solid #374151',
+        display: 'flex', gap: 24
+      }}>
+        <span>左：{originalName || '未选择'} · {original.length} 字符</span>
+        <span>右：{modifiedName || '未选择'} · {modified.length} 字符</span>
+        <span style={{ marginLeft: 'auto' }}>语言：{effectiveLanguage}</span>
       </div>
     </div>
   );

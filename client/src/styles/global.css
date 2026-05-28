@@ -211,9 +211,16 @@ button {
 }
 
 .diff-editor-wrap {
-  flex: 1;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 400px;
+  height: 100%;
   background: #1e1e1e;
+  position: relative;
+}
+
+.diff-editor-wrap > section,
+.diff-editor-wrap > div {
+  height: 100% !important;
 }
 
 .file-info {
