@@ -7,7 +7,11 @@ import App from '@/App';
 import HomePage from '@/pages/home';
 import DiffToolPage from '@/pages/tools/diff';
 import NotFoundPage from '@/pages/not-found';
+import { applyTheme, useThemeStore } from '@/store/theme-store';
 import './index.css';
+
+// 启动时立即应用持久化的主题，避免闪屏
+applyTheme(useThemeStore.getState().theme);
 
 const router = createBrowserRouter([
   {

@@ -5,15 +5,23 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   ArrowLeftRight,
+  Code2,
   Eraser,
+  FileText,
   FileUp,
+  Hash,
   Loader2,
   Palette,
   RotateCcw,
-  Share2
+  Share2,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { RichDiffView } from '@/components/rich-diff-view';
 import { parseFile, detectLanguageSmart } from '@/lib/file-parser';
 import { pullDiff, pushDiff } from '@/lib/api';
@@ -32,10 +40,10 @@ const FILE_ACCEPT = [
   '.doc', '.docx', '.pdf'
 ].join(',');
 
-const VIEW_MODES: { value: ViewMode; label: string; desc: string }[] = [
-  { value: 'text', label: '文本', desc: '纯文本对比（适合代码/普通文本）' },
-  { value: 'markdown', label: 'Markdown', desc: '保留标题/列表等结构化格式（推荐用于 docx）' },
-  { value: 'rich', label: '富文本', desc: '并排渲染并字级标注（最贴近 Word 视觉）' }
+const VIEW_MODES: { value: ViewMode; label: string; icon: typeof Code2; desc: string }[] = [
+  { value: 'text', label: '文本', icon: Code2, desc: '纯文本对比（适合代码/普通文本）' },
+  { value: 'markdown', label: 'Markdown', icon: Hash, desc: '保留标题/列表等结构（推荐用于 docx）' },
+  { value: 'rich', label: '富文本', icon: FileText, desc: '并排渲染并字级标注（最贴近 Word 视觉）' }
 ];
 
 const MONACO_THEMES: { value: MonacoTheme; label: string }[] = [
@@ -106,7 +114,6 @@ export default function DiffToolPage() {
     return 'plaintext';
   }, [viewMode, langMode, originalKind, modifiedKind, originalName, modifiedName, original, modified]);
 
-  // ---- 当前用于 Monaco 显示的内容（根据 viewMode 切换） ----
   const { editorOriginal, editorModified } = useMemo(() => {
     if (viewMode === 'markdown' && (originalMarkdown || modifiedMarkdown)) {
       return { editorOriginal: originalMarkdown || original, editorModified: modifiedMarkdown || modified };
@@ -114,7 +121,6 @@ export default function DiffToolPage() {
     return { editorOriginal: original, editorModified: modified };
   }, [viewMode, original, modified, originalMarkdown, modifiedMarkdown]);
 
-  // ---- 主动同步内容到 Monaco model ----
   useEffect(() => {
     const ed = editorRef.current;
     if (!ed) return;
@@ -127,7 +133,6 @@ export default function DiffToolPage() {
     });
   }, [editorOriginal, editorModified, viewMode]);
 
-  // 是否可用富文本/Markdown 模式（至少一边是 docx）
   const hasRichContent = !!(originalHtml || modifiedHtml);
 
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>, side: 'original' | 'modified') => {
@@ -145,12 +150,12 @@ export default function DiffToolPage() {
         kind: parsed.kind
       });
       toast.dismiss(t);
-      const tag = parsed.kind === 'docx' ? '[DOCX]' : parsed.kind === 'pdf' ? '[PDF]' : parsed.kind === 'doc' ? '[DOC]' : '';
+      const tag = parsed.kind === 'docx' ? 'DOCX' : parsed.kind === 'pdf' ? 'PDF' : parsed.kind === 'doc' ? 'DOC' : '';
       if (parsed.warning) {
         toast.warning(`${file.name}：${parsed.warning}`);
       } else {
         const extra = parsed.html ? '（含格式 HTML / Markdown）' : '';
-        toast.success(`已加载 ${tag} ${file.name} ${extra}`, {
+        toast.success(`已加载 ${tag ? `[${tag}] ` : ''}${file.name} ${extra}`, {
           description: `${parsed.text.length} 字符`
         });
       }
@@ -163,115 +168,129 @@ export default function DiffToolPage() {
     }
   };
 
+  const FilePicker = ({
+    side,
+    label,
+    name,
+    inputRef
+  }: {
+    side: 'original' | 'modified';
+    label: string;
+    name: string;
+    inputRef: React.RefObject<HTMLInputElement | null>;
+  }) => (
+    <div className="flex items-center gap-2">
+      <Badge variant="outline" className="font-normal">
+        {label}
+      </Badge>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={parsing}
+            onClick={() => inputRef.current?.click()}
+          >
+            <FileUp />
+            选择文件
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>支持 txt / md / 代码 / docx / pdf / doc</TooltipContent>
+      </Tooltip>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={FILE_ACCEPT}
+        className="hidden"
+        onChange={(e) => handlePick(e, side)}
+      />
+      {name && (
+        <span className="text-xs text-[var(--color-muted-foreground)] max-w-[200px] truncate">
+          {name}
+        </span>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      {/* Toolbar 1: 文件选择 */}
+      {/* Toolbar 1: 文件选择 + 操作 */}
       <div className="border-b border-[var(--color-border)] bg-[var(--color-card)] px-5 py-3 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--color-muted)]">原始：</span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={parsing}
-            onClick={() => originalInputRef.current?.click()}
-          >
-            <FileUp className="h-3.5 w-3.5" />
-            选择文件
-          </Button>
-          <input
-            ref={originalInputRef}
-            type="file"
-            accept={FILE_ACCEPT}
-            className="hidden"
-            onChange={(e) => handlePick(e, 'original')}
-          />
-          {originalName && (
-            <span className="text-xs text-[var(--color-muted)] max-w-[200px] truncate">{originalName}</span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--color-muted)]">修改：</span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={parsing}
-            onClick={() => modifiedInputRef.current?.click()}
-          >
-            <FileUp className="h-3.5 w-3.5" />
-            选择文件
-          </Button>
-          <input
-            ref={modifiedInputRef}
-            type="file"
-            accept={FILE_ACCEPT}
-            className="hidden"
-            onChange={(e) => handlePick(e, 'modified')}
-          />
-          {modifiedName && (
-            <span className="text-xs text-[var(--color-muted)] max-w-[200px] truncate">{modifiedName}</span>
-          )}
-        </div>
+        <FilePicker side="original" label="原始" name={originalName} inputRef={originalInputRef} />
+        <Separator orientation="vertical" className="h-6" />
+        <FilePicker side="modified" label="修改" name={modifiedName} inputRef={modifiedInputRef} />
 
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={swap} title="交换左右">
-            <ArrowLeftRight className="h-3.5 w-3.5" />
-            交换
-          </Button>
-          <Button variant="outline" size="sm" onClick={clear}>
-            <Eraser className="h-3.5 w-3.5" />
-            清空
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => pushMutation.mutate()}
-            disabled={pushMutation.isPending}
-          >
-            {pushMutation.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Share2 className="h-3.5 w-3.5" />
-            )}
-            推送到 API
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={swap}>
+                <ArrowLeftRight />
+                交换
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>交换左右内容</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={clear}>
+                <Eraser />
+                清空
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>清空当前所有内容</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                onClick={() => pushMutation.mutate()}
+                disabled={pushMutation.isPending}
+              >
+                {pushMutation.isPending ? <Loader2 className="animate-spin" /> : <Share2 />}
+                推送到 API
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>生成可分享链接</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
       {/* Toolbar 2: 视图模式 + 语言 + 主题 */}
-      <div className="border-b border-[var(--color-border)] bg-[var(--color-accent)] px-5 py-2 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1 bg-[var(--color-card)] rounded-md p-0.5 border border-[var(--color-border)]">
+      <div className="border-b border-[var(--color-border)] bg-[var(--color-background)] px-5 py-2.5 flex flex-wrap items-center gap-3">
+        <ToggleGroup
+          type="single"
+          size="sm"
+          value={viewMode}
+          onValueChange={(v) => v && setViewMode(v as ViewMode)}
+        >
           {VIEW_MODES.map((m) => {
             const disabled = (m.value === 'rich' || m.value === 'markdown') && !hasRichContent;
+            const Icon = m.icon;
             return (
-              <button
-                key={m.value}
-                disabled={disabled}
-                onClick={() => setViewMode(m.value)}
-                title={disabled ? '需选择 docx 文件' : m.desc}
-                className={cn(
-                  'px-3 py-1 text-xs rounded transition-colors',
-                  viewMode === m.value
-                    ? 'bg-[var(--color-primary)] text-white'
-                    : 'text-[var(--color-fg)] hover:bg-[var(--color-accent)]',
-                  disabled && 'opacity-40 cursor-not-allowed'
-                )}
-              >
-                {m.label}
-              </button>
+              <Tooltip key={m.value}>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem value={m.value} disabled={disabled} aria-label={m.label}>
+                    <Icon />
+                    <span>{m.label}</span>
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>{disabled ? '需选择 docx 文件' : m.desc}</TooltipContent>
+              </Tooltip>
             );
           })}
-        </div>
+        </ToggleGroup>
 
         {viewMode !== 'rich' && (
           <>
+            <Separator orientation="vertical" className="h-6" />
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[var(--color-muted)]">语言：</span>
+              <Sparkles className="h-3.5 w-3.5 text-[var(--color-muted-foreground)]" />
+              <span className="text-xs text-[var(--color-muted-foreground)]">语言</span>
               <Select
                 value={langMode}
                 onChange={(e) => setLangMode(e.target.value)}
                 className="h-8"
                 disabled={viewMode === 'markdown'}
-                title={viewMode === 'markdown' ? 'Markdown 模式固定使用 markdown 语言' : '默认自动'}
               >
                 <option value="auto">
                   自动{langMode === 'auto' ? `（${effectiveLanguage}）` : ''}
@@ -281,16 +300,20 @@ export default function DiffToolPage() {
                 ))}
               </Select>
               {langMode !== 'auto' && viewMode !== 'markdown' && (
-                <Button variant="ghost" size="sm" onClick={() => setLangMode('auto')}>
-                  <RotateCcw className="h-3 w-3" />
-                  自动
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="sm" onClick={() => setLangMode('auto')}>
+                      <RotateCcw />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>恢复自动识别</TooltipContent>
+                </Tooltip>
               )}
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
-              <Palette className="h-3.5 w-3.5 text-[var(--color-muted)]" />
-              <span className="text-xs text-[var(--color-muted)]">主题：</span>
+              <Palette className="h-3.5 w-3.5 text-[var(--color-muted-foreground)]" />
+              <span className="text-xs text-[var(--color-muted-foreground)]">编辑器主题</span>
               <Select
                 value={monacoTheme}
                 onChange={(e) => setMonacoTheme(e.target.value as MonacoTheme)}
@@ -305,16 +328,18 @@ export default function DiffToolPage() {
         )}
 
         {viewMode === 'rich' && (
-          <span className="ml-auto text-xs text-[var(--color-muted)]">
-            富文本模式：左侧红色为删除，右侧绿色为新增
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <Badge variant="destructive">删除</Badge>
+            <Badge variant="success">新增</Badge>
+            <span className="text-xs text-[var(--color-muted-foreground)]">字级标注</span>
+          </div>
         )}
       </div>
 
       {/* Editor / Rich View */}
       <div className={cn(
         'flex-1 min-h-[400px] relative',
-        viewMode === 'rich' ? 'bg-white' : 'bg-[#1e1e1e]'
+        viewMode === 'rich' ? 'bg-[var(--color-card)]' : ''
       )}>
         {viewMode === 'rich' ? (
           <RichDiffView originalHtml={originalHtml} modifiedHtml={modifiedHtml} />
@@ -327,7 +352,7 @@ export default function DiffToolPage() {
             modified={editorModified}
             theme={monacoTheme}
             loading={
-              <div className="flex items-center gap-2 text-slate-400 p-6">
+              <div className="flex items-center gap-2 text-[var(--color-muted-foreground)] p-6">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 编辑器加载中…
               </div>
@@ -340,7 +365,8 @@ export default function DiffToolPage() {
               minimap: { enabled: false },
               fontSize: 13,
               scrollBeyondLastLine: false,
-              wordWrap: 'on'
+              wordWrap: 'on',
+              padding: { top: 12 }
             }}
             onMount={(ed) => {
               editorRef.current = ed;
@@ -353,17 +379,24 @@ export default function DiffToolPage() {
       </div>
 
       {/* Status bar */}
-      <div className={cn(
-        'text-xs px-5 py-1.5 flex gap-6 border-t',
-        viewMode === 'rich'
-          ? 'bg-slate-50 text-slate-600 border-slate-200'
-          : 'bg-slate-900 text-slate-400 border-slate-700'
-      )}>
-        <span>左：{originalName || '未选择'} · {original.length} 字符</span>
-        <span>右：{modifiedName || '未选择'} · {modified.length} 字符</span>
-        <span className="ml-auto">
-          {viewMode === 'rich' ? '富文本' : viewMode === 'markdown' ? 'Markdown' : `语言：${effectiveLanguage}`}
-        </span>
+      <div className="border-t border-[var(--color-border)] bg-[var(--color-card)] text-xs px-5 py-1.5 flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[var(--color-muted-foreground)]">左：</span>
+          <span className="font-medium truncate max-w-[180px]">{originalName || '未选择'}</span>
+          <Badge variant="outline" className="font-normal">{original.length} 字符</Badge>
+        </div>
+        <Separator orientation="vertical" className="h-4" />
+        <div className="flex items-center gap-1.5">
+          <span className="text-[var(--color-muted-foreground)]">右：</span>
+          <span className="font-medium truncate max-w-[180px]">{modifiedName || '未选择'}</span>
+          <Badge variant="outline" className="font-normal">{modified.length} 字符</Badge>
+        </div>
+        <div className="ml-auto flex items-center gap-1.5">
+          <span className="text-[var(--color-muted-foreground)]">视图：</span>
+          <Badge variant="secondary">
+            {viewMode === 'rich' ? '富文本' : viewMode === 'markdown' ? 'Markdown' : effectiveLanguage}
+          </Badge>
+        </div>
       </div>
     </div>
   );

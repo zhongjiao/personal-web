@@ -61,7 +61,7 @@ export function RichDiffView({ originalHtml, modifiedHtml }: RichDiffViewProps) 
   }, [originalHtml, modifiedHtml]);
 
   return (
-    <div className="grid grid-cols-2 h-full overflow-hidden bg-white">
+    <div className="grid grid-cols-2 h-full overflow-hidden bg-[var(--color-card)]">
       <div className="overflow-auto p-6 border-r border-[var(--color-border)]">
         <div className={styles.side} dangerouslySetInnerHTML={{ __html: leftHtml }} />
       </div>
