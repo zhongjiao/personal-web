@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DiffEditor, type MonacoDiffEditor } from '@monaco-editor/react';
+import type { Monaco } from '@monaco-editor/react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -11,7 +12,9 @@ import {
   FileUp,
   Hash,
   Loader2,
+  Lock,
   Palette,
+  Pencil,
   RotateCcw,
   Share2,
   Sparkles
@@ -60,14 +63,57 @@ export default function DiffToolPage() {
   const {
     original, modified, originalHtml, modifiedHtml, originalMarkdown, modifiedMarkdown,
     originalName, modifiedName, originalKind, modifiedKind,
-    langMode, viewMode, monacoTheme,
-    setSide, setLangMode, setViewMode, setMonacoTheme, swap, clear, loadFromApi
+    langMode, viewMode, monacoTheme, readOnly,
+    setSide, setLangMode, setViewMode, setMonacoTheme, setReadOnly, swap, clear, loadFromApi
   } = useDiffStore();
 
   const [parsing, setParsing] = useState(false);
   const originalInputRef = useRef<HTMLInputElement>(null);
   const modifiedInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<MonacoDiffEditor | null>(null);
+  const monacoRef = useRef<Monaco | null>(null);
+
+  /**
+   * 根据 readOnly 状态打开/关闭 Monaco 各语言的语法/语义校验
+   * 只读时关闭，避免代码片段（尤其是 docx 提取内容）被误判出大量红线
+   */
+  const applyValidation = (monaco: Monaco | null, ro: boolean) => {
+    if (!monaco) return;
+    try {
+      monaco.languages.typescript?.javascriptDefaults.setDiagnosticsOptions({
+        noSemanticValidation: ro,
+        noSyntaxValidation: ro,
+        noSuggestionDiagnostics: ro
+      });
+      monaco.languages.typescript?.typescriptDefaults.setDiagnosticsOptions({
+        noSemanticValidation: ro,
+        noSyntaxValidation: ro,
+        noSuggestionDiagnostics: ro
+      });
+      monaco.languages.json?.jsonDefaults.setDiagnosticsOptions({
+        validate: !ro,
+        allowComments: true,
+        schemas: [],
+        enableSchemaRequest: false
+      });
+      monaco.languages.css?.cssDefaults.setDiagnosticsOptions({ validate: !ro });
+      monaco.languages.css?.scssDefaults.setDiagnosticsOptions({ validate: !ro });
+      monaco.languages.css?.lessDefaults.setDiagnosticsOptions({ validate: !ro });
+    } catch { /* 某些语言模块未加载时忽略 */ }
+  };
+
+  // 切换只读时同步生效
+  useEffect(() => {
+    applyValidation(monacoRef.current, readOnly);
+    // 只读切换时，原模型的 markers 也清掉
+    if (readOnly && editorRef.current && monacoRef.current) {
+      const oModel = editorRef.current.getOriginalEditor().getModel();
+      const mModel = editorRef.current.getModifiedEditor().getModel();
+      [oModel, mModel].forEach((m) => {
+        if (m) monacoRef.current!.editor.setModelMarkers(m, 'owner', []);
+      });
+    }
+  }, [readOnly]);
 
   // ---- API 拉取 ----
   useQuery({
@@ -323,6 +369,24 @@ export default function DiffToolPage() {
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </Select>
+
+              <Separator orientation="vertical" className="h-6" />
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={readOnly ? 'outline' : 'default'}
+                    size="sm"
+                    onClick={() => setReadOnly(!readOnly)}
+                  >
+                    {readOnly ? <Lock /> : <Pencil />}
+                    {readOnly ? '只读' : '编辑'}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {readOnly ? '当前只读（关闭语法检测）。点击切换为可编辑' : '当前可编辑（启用语法检测）。点击切换为只读'}
+                </TooltipContent>
+              </Tooltip>
             </div>
           </>
         )}
@@ -359,17 +423,25 @@ export default function DiffToolPage() {
             }
             options={{
               renderSideBySide: true,
-              originalEditable: true,
-              readOnly: false,
+              originalEditable: !readOnly,
+              readOnly: readOnly,
               automaticLayout: true,
               minimap: { enabled: false },
               fontSize: 13,
               scrollBeyondLastLine: false,
               wordWrap: 'on',
-              padding: { top: 12 }
+              padding: { top: 12 },
+              // 只读时关闭所有语法检测视觉效果
+              renderValidationDecorations: readOnly ? 'off' : 'on',
+              quickSuggestions: !readOnly,
+              suggestOnTriggerCharacters: !readOnly,
+              parameterHints: { enabled: !readOnly },
+              hover: { enabled: !readOnly }
             }}
-            onMount={(ed) => {
+            onMount={(ed, monaco) => {
               editorRef.current = ed;
+              monacoRef.current = monaco;
+              applyValidation(monaco, readOnly);
               requestAnimationFrame(() => {
                 try { ed.layout(); } catch { /* noop */ }
               });
@@ -392,6 +464,11 @@ export default function DiffToolPage() {
           <Badge variant="outline" className="font-normal">{modified.length} 字符</Badge>
         </div>
         <div className="ml-auto flex items-center gap-1.5">
+          {viewMode !== 'rich' && (
+            <Badge variant={readOnly ? 'outline' : 'success'} className="font-normal">
+              {readOnly ? <><Lock className="h-3 w-3" />只读</> : <><Pencil className="h-3 w-3" />可编辑</>}
+            </Badge>
+          )}
           <span className="text-[var(--color-muted-foreground)]">视图：</span>
           <Badge variant="secondary">
             {viewMode === 'rich' ? '富文本' : viewMode === 'markdown' ? 'Markdown' : effectiveLanguage}

@@ -24,6 +24,8 @@ interface DiffState {
   langMode: string; // 'auto' 或具体语言
   viewMode: ViewMode; // 文本 / Markdown / 富文本
   monacoTheme: MonacoTheme;
+  /** 只读模式：true 时编辑器禁止编辑 + 关闭语法检测 */
+  readOnly: boolean;
 
   setSide: (
     side: 'original' | 'modified',
@@ -33,6 +35,7 @@ interface DiffState {
   setLangMode: (m: string) => void;
   setViewMode: (m: ViewMode) => void;
   setMonacoTheme: (t: MonacoTheme) => void;
+  setReadOnly: (v: boolean) => void;
   swap: () => void;
   clear: () => void;
   loadFromApi: (data: { original: string; modified: string; language?: string }) => void;
@@ -58,6 +61,7 @@ export const useDiffStore = create<DiffState>()(
       ...initial,
       viewMode: 'text',
       monacoTheme: 'vs-dark',
+      readOnly: true,
 
       setSide: (side, p) =>
         set(
@@ -82,6 +86,7 @@ export const useDiffStore = create<DiffState>()(
       setLangMode: (m) => set({ langMode: m }),
       setViewMode: (m) => set({ viewMode: m }),
       setMonacoTheme: (t) => set({ monacoTheme: t }),
+      setReadOnly: (v) => set({ readOnly: v }),
       swap: () =>
         set((s) => ({
           original: s.modified,
@@ -114,7 +119,7 @@ export const useDiffStore = create<DiffState>()(
     {
       name: 'pmp-diff-prefs',
       // 只持久化用户偏好，不持久化具体内容
-      partialize: (s) => ({ viewMode: s.viewMode, monacoTheme: s.monacoTheme })
+      partialize: (s) => ({ viewMode: s.viewMode, monacoTheme: s.monacoTheme, readOnly: s.readOnly })
     }
   )
 );
