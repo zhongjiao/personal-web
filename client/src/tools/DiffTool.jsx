@@ -36,6 +36,17 @@ export default function DiffTool() {
 
   const originalInputRef = useRef(null);
   const modifiedInputRef = useRef(null);
+  const diffEditorRef = useRef(null);
+
+  // 从编辑器读取当前内容（编辑器是真实数据源，编辑后 React state 不会立即同步）
+  const readEditorValues = () => {
+    const ed = diffEditorRef.current;
+    if (!ed) return { original, modified };
+    return {
+      original: ed.getOriginalEditor().getValue(),
+      modified: ed.getModifiedEditor().getValue()
+    };
+  };
 
   // ---- 计算实际生效的语言 ----
   const effectiveLanguage = useMemo(() => {
@@ -126,10 +137,15 @@ export default function DiffTool() {
 
   const handlePushToApi = async () => {
     try {
+      const cur = readEditorValues();
       const resp = await fetch('/api/diff/push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ original, modified, language: effectiveLanguage })
+        body: JSON.stringify({
+          original: cur.original,
+          modified: cur.modified,
+          language: effectiveLanguage
+        })
       });
       const json = await resp.json();
       if (json.success) {
@@ -232,6 +248,8 @@ export default function DiffTool() {
           original={original}
           modified={modified}
           theme="vs-dark"
+          keepCurrentOriginalModel
+          keepCurrentModifiedModel
           options={{
             renderSideBySide: true,
             originalEditable: true,
@@ -243,12 +261,9 @@ export default function DiffTool() {
             wordWrap: 'on'
           }}
           onMount={(editor) => {
-            editor.getModifiedEditor().onDidChangeModelContent(() => {
-              setModified(editor.getModifiedEditor().getValue());
-            });
-            editor.getOriginalEditor().onDidChangeModelContent(() => {
-              setOriginal(editor.getOriginalEditor().getValue());
-            });
+            // 保存 ref 以便后续读取（不再监听 onDidChangeModelContent，
+            // 避免外部 setState 写入 model 时反向触发 setState 造成竞态/闪烁）
+            diffEditorRef.current = editor;
           }}
         />
       </div>
