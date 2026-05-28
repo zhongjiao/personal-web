@@ -5,6 +5,7 @@ const multer = require('multer');
 const mammoth = require('mammoth');
 const pdfParse = require('pdf-parse');
 const path = require('path');
+const { processDocFile, getSoffice } = require('./doc-converter');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -73,10 +74,15 @@ app.post('/api/diff/extract', upload.single('file'), async (req, res) => {
       text = result.text || '';
       kind = 'pdf';
     } else if (ext === '.doc') {
-      return res.status(415).json({
-        success: false,
-        message: '.doc 旧格式暂不支持，请另存为 .docx 后上传'
-      });
+      // .doc 旧格式：用 LibreOffice 转 docx 后提文本（兜底用 word-extractor）
+      const result = await processDocFile(buffer);
+      if (result.mode === 'docx') {
+        const m = await mammoth.extractRawText({ buffer: result.docxBuffer });
+        text = m.value || '';
+      } else {
+        text = result.text || '';
+      }
+      kind = 'doc';
     } else {
       // 默认按 utf-8 文本
       text = buffer.toString('utf-8');
@@ -113,6 +119,68 @@ app.get('/api/tools', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+// ---- .doc → .docx 转换接口（专为前端 .doc 上传场景） ----
+// 成功 + 有 LibreOffice：返回二进制 docx（前端再走 mammoth 解析，保留格式）
+// 成功 + 无 LibreOffice：返回 JSON { mode: 'text', text, message }
+// 失败：返回 JSON { success: false, message }
+app.post('/api/doc/convert', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '缺少文件 (form field: file)' });
+    }
+    const ext = path.extname(req.file.originalname || '').toLowerCase();
+    if (ext !== '.doc') {
+      return res.status(400).json({ success: false, message: '仅支持 .doc 文件' });
+    }
+    const result = await processDocFile(req.file.buffer);
+    if (result.mode === 'docx') {
+      // 返回 docx 二进制
+      const newName =
+        path.basename(req.file.originalname, '.doc') + '.docx';
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${encodeURIComponent(newName)}"`
+      );
+      res.setHeader('X-Convert-Mode', 'docx');
+      res.setHeader('X-Convert-Message', encodeURIComponent(result.message));
+      return res.send(result.docxBuffer);
+    }
+    // 降级：返回纯文本 JSON
+    return res.json({
+      success: true,
+      mode: 'text',
+      text: result.text || '',
+      message: result.message
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: '转换失败：' + err.message });
+  }
+});
+
+// ---- 后端能力信息（前端可询问当前是否支持 docx 保留格式转换） ----
+app.get('/api/capabilities', async (req, res) => {
+  const soffice = await getSoffice();
+  res.json({
+    success: true,
+    data: {
+      libreoffice: !!soffice,
+      docToDocx: !!soffice,
+      docToText: true
+    }
+  });
+});
+
+app.listen(PORT, async () => {
   console.log(`[pmp-server] listening on http://localhost:${PORT}`);
+  const soffice = await getSoffice();
+  if (soffice) {
+    console.log(`[pmp-server] LibreOffice detected: ${soffice} → .doc 将保留格式转换为 docx`);
+  } else {
+    console.log('[pmp-server] LibreOffice 未检测到 → .doc 仅可降级提取纯文本');
+    console.log('  如需保留格式，请安装 LibreOffice 或设置 SOFFICE_PATH 环境变量');
+  }
 });

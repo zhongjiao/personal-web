@@ -1,0 +1,79 @@
+/* CSS Modules：所有类名仅作用于本组件，不会泄漏到全局 */
+
+.side {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #1f2937;
+  word-wrap: break-word;
+}
+
+.side h1,
+.side h2,
+.side h3,
+.side h4 {
+  margin: 1.2em 0 0.6em;
+  font-weight: 600;
+  color: #111827;
+}
+.side h1 {
+  font-size: 1.6em;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3em;
+}
+.side h2 {
+  font-size: 1.35em;
+}
+.side h3 {
+  font-size: 1.15em;
+}
+.side p {
+  margin: 0.6em 0;
+}
+.side ul,
+.side ol {
+  padding-left: 1.6em;
+  margin: 0.6em 0;
+}
+.side li {
+  margin: 0.2em 0;
+}
+.side blockquote {
+  margin: 0.8em 0;
+  padding: 0.4em 1em;
+  border-left: 4px solid #d1d5db;
+  color: #4b5563;
+  background: #f9fafb;
+}
+.side table {
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  width: 100%;
+}
+.side th,
+.side td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  text-align: left;
+}
+.side strong {
+  font-weight: 600;
+}
+.side em {
+  font-style: italic;
+}
+
+/* 关键：内部使用语义化的 ins/del 标签，但样式只在 .side 作用域内生效，不会影响全局 ins/del */
+.side ins {
+  background: #dcfce7;
+  color: #166534;
+  text-decoration: none;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+.side del {
+  background: #fee2e2;
+  color: #991b1b;
+  text-decoration: line-through;
+  padding: 0 2px;
+  border-radius: 2px;
+}

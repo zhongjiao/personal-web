@@ -101,9 +101,9 @@ function readAsText(file: File): Promise<string> {
   });
 }
 
-async function parseDocx(file: File): Promise<{ text: string; html: string; markdown: string }> {
-  const arrayBuffer = await readAsArrayBuffer(file);
-  // 同时提取文本和 HTML（mammoth 内置 docx → html 转换，保留标题/列表/粗体/表格等结构）
+async function parseDocxFromArrayBuffer(
+  arrayBuffer: ArrayBuffer
+): Promise<{ text: string; html: string; markdown: string }> {
   const [{ value: text }, { value: html }] = await Promise.all([
     mammoth.extractRawText({ arrayBuffer }),
     mammoth.convertToHtml(
@@ -122,12 +122,53 @@ async function parseDocx(file: File): Promise<{ text: string; html: string; mark
       }
     )
   ]);
-
-  // HTML → Markdown
   const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
   const markdown = td.turndown(html || '');
-
   return { text: text || '', html: html || '', markdown };
+}
+
+async function parseDocx(file: File): Promise<{ text: string; html: string; markdown: string }> {
+  const arrayBuffer = await readAsArrayBuffer(file);
+  return parseDocxFromArrayBuffer(arrayBuffer);
+}
+
+/**
+ * 通过后端把 .doc 转成 .docx（LibreOffice）或文本（兜底）
+ */
+async function parseDocViaServer(
+  file: File
+): Promise<{ text: string; html?: string; markdown?: string; warning?: string }> {
+  const fd = new FormData();
+  fd.append('file', file);
+  const resp = await fetch('/api/doc/convert', { method: 'POST', body: fd });
+  const ct = resp.headers.get('Content-Type') || '';
+
+  if (!resp.ok) {
+    let msg = `HTTP ${resp.status}`;
+    try {
+      const j = await resp.json();
+      msg = j.message || msg;
+    } catch { /* ignore */ }
+    throw new Error(msg);
+  }
+
+  // 返回二进制 docx → 走 mammoth 流程，保留格式
+  if (ct.includes('officedocument.wordprocessingml')) {
+    const ab = await resp.arrayBuffer();
+    const parsed = await parseDocxFromArrayBuffer(ab);
+    return parsed;
+  }
+
+  // 返回 JSON，可能是降级文本
+  const json = await resp.json();
+  if (!json.success) throw new Error(json.message || '后端处理失败');
+  if (json.mode === 'text') {
+    return {
+      text: json.text || '',
+      warning: json.message || '后端降级提取文本，无格式'
+    };
+  }
+  throw new Error('后端返回了未知格式');
 }
 
 async function parsePdf(file: File): Promise<string> {
@@ -166,14 +207,15 @@ export async function parseFile(file: File): Promise<ParsedFile> {
     return { text, language: 'plaintext', kind: 'pdf' };
   }
   if (ext === 'doc') {
-    const msg =
-      '[提示] .doc（Word 97-2003 旧二进制格式）暂不支持纯前端解析。\n' +
-      '请将文件另存为 .docx 后再上传，或后续通过后端接口转换。';
+    // 走后端：LibreOffice 转 docx 后保留格式，或兜底返回纯文本
+    const result = await parseDocViaServer(file);
     return {
-      text: msg,
+      text: result.text,
+      html: result.html,
+      markdown: result.markdown,
       language: 'plaintext',
       kind: 'doc',
-      warning: '请将 .doc 另存为 .docx 后再上传'
+      warning: result.warning
     };
   }
   const text = await readAsText(file);

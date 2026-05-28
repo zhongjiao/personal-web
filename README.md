@@ -36,10 +36,13 @@
 
 - 自动识别语言（按扩展名 + 内容启发，无需用户操作）
 - 支持 文本/代码、**DOCX**、**PDF** 文件本地对比
-- `.doc` 旧格式：提示用户另存为 `.docx`
+- **`.doc` 旧格式自动通过后端转换**（LibreOffice 保留格式 / 兜底纯文本）
+- DOCX 三种视图模式：**文本** / **Markdown** / **富文本（保留格式 + 字级高亮）**
+- Monaco 主题切换（`vs-dark` / `vs` / `hc-black` / `hc-light`），偏好持久化
 - 通过 `?id=xxx` 加载 API 推送的数据进行对比
 - 一键将当前内容推送到 API，自动复制分享链接
 - 状态栏实时显示左右字符数 / 当前语言
+- 组件样式采用 **CSS Modules** 局部作用域，不污染全局
 
 ## 快速开始
 
@@ -89,6 +92,36 @@ GET /api/diff/pull/:id
 ```bash
 POST /api/diff/extract       # multipart, field=file
 ```
+
+### .doc → .docx 转换（保留格式）
+
+需要服务器安装 [LibreOffice](https://www.libreoffice.org/) 并保证 `soffice` 命令可用。也可设置环境变量 `SOFFICE_PATH` 指向 `soffice.exe` 完整路径。
+
+```bash
+POST /api/doc/convert        # multipart, field=file
+# 成功 + 有 LibreOffice → 直接返回 docx 二进制（响应头 X-Convert-Mode: docx）
+# 成功 + 无 LibreOffice → 返回 JSON { mode: "text", text, message } (兜底)
+```
+
+服务器启动时会自动检测 LibreOffice 并打印日志：
+
+```
+[pmp-server] LibreOffice detected: ... → .doc 将保留格式转换为 docx
+```
+
+或：
+
+```
+[pmp-server] LibreOffice 未检测到 → .doc 仅可降级提取纯文本
+```
+
+### 后端能力查询
+
+```bash
+GET /api/capabilities
+```
+
+返回 `{ libreoffice: bool, docToDocx: bool, docToText: true }`。
 
 ## 添加新工具
 
