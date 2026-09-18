@@ -54,9 +54,11 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-1">
-                    <Badge variant="secondary">Monaco</Badge>
-                    <Badge variant="secondary">DOCX</Badge>
-                    <Badge variant="secondary">PDF</Badge>
+                    {tool.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

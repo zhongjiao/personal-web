@@ -6,6 +6,7 @@ import { Toaster } from 'sonner';
 import App from '@/App';
 import HomePage from '@/pages/home';
 import DiffToolPage from '@/pages/tools/diff';
+import DinoPage from '@/pages/tools/dino';
 import NotFoundPage from '@/pages/not-found';
 import { applyTheme, useThemeStore } from '@/store/theme-store';
 import './index.css';
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, Component: HomePage },
       { path: 'tools/diff', Component: DiffToolPage },
+      { path: 'tools/dino', Component: DinoPage },
       { path: '*', Component: NotFoundPage }
     ]
   }
