@@ -1,0 +1,71 @@
+{
+  "name": "@pmp/tool-diff",
+  "version": "1.0.0",
+  "description": "差异对比：Monaco 文本/代码对比 + DOCX/PDF 解析，可经 API 分享对比数据",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./manifest": "./src/manifest.ts",
+    "./page": "./src/page.tsx"
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./manifest": {
+        "types": "./dist/manifest.d.ts",
+        "import": "./dist/manifest.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "samples": "node scripts/generate-samples.cjs"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.0.0"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
+    "@pmp/tool-contract": "workspace:*",
+    "@pmp/ui": "workspace:*",
+    "@tanstack/react-query": "^5.59.0",
+    "diff": "^9.0.0",
+    "lucide-react": "^0.460.0",
+    "mammoth": "^1.8.0",
+    "monaco-editor": "^0.50.0",
+    "pdfjs-dist": "^4.7.76",
+    "sonner": "^1.7.0",
+    "turndown": "^7.2.4",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/diff": "^8.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/turndown": "^5.0.6",
+    "@vitejs/plugin-react": "^4.3.4",
+    "docx": "^9.7.1",
+    "pdfkit": "^0.18.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^7.0.0"
+  }
+}

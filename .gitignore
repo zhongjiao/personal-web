@@ -10,5 +10,5 @@ build/
 
 # TypeScript 构建产物
 *.tsbuildinfo
-client/vite.config.d.ts
-client/vite.config.js
+**/vite.config.d.ts
+**/vite.config.js

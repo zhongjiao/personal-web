@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@pmp/ui": ["../ui/src/index.ts"],
+      "@pmp/image-kit": ["../image-kit/src/index.ts"],
+      "@pmp/tool-contract": ["../tool-contract/src/index.ts"]
+    }
+  },
+  "include": ["src", "dev"]
+}

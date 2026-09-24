@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+/* 用相对路径而不是包名：Tailwind 的 @import 解析不走 Vite alias，
+ * 而 Windows 上的 workspace 符号链接不可靠（见 .npmrc 注释）。 */
+@import '../../../packages/ui/src/styles/theme.css';
+
+/* monorepo：Tailwind 默认只扫描 vite root（apps/web），
+ * 各包的源码目录必须显式声明，否则工具包里的 class 不会被生成。 */
+@source '../../../packages/ui/src';
+@source '../../../packages/image-kit/src';
+@source '../../../packages/tool-beauty/src';
+@source '../../../packages/tool-konva-image/src';
+@source '../../../packages/tool-photoshop/src';
+@source '../../../packages/tool-diff/src';

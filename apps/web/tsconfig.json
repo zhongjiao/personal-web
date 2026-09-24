@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@pmp/ui/styles/theme.css": ["../../packages/ui/src/styles/theme.css"],
+      "@pmp/ui": ["../../packages/ui/src/index.ts"],
+      "@pmp/image-kit/core": ["../../packages/image-kit/src/lib/image-editor.ts"],
+      "@pmp/image-kit": ["../../packages/image-kit/src/index.ts"],
+      "@pmp/tool-contract": ["../../packages/tool-contract/src/index.ts"],
+      "@pmp/tool-beauty/manifest": ["../../packages/tool-beauty/src/manifest.ts"],
+      "@pmp/tool-beauty": ["../../packages/tool-beauty/src/index.ts"],
+      "@pmp/tool-konva-image/manifest": ["../../packages/tool-konva-image/src/manifest.ts"],
+      "@pmp/tool-konva-image": ["../../packages/tool-konva-image/src/index.ts"],
+      "@pmp/tool-photoshop/manifest": ["../../packages/tool-photoshop/src/manifest.ts"],
+      "@pmp/tool-photoshop": ["../../packages/tool-photoshop/src/index.ts"],
+      "@pmp/tool-diff/manifest": ["../../packages/tool-diff/src/manifest.ts"],
+      "@pmp/tool-diff": ["../../packages/tool-diff/src/index.ts"]
+    }
+  },
+  "//": "paths 直指各包 src（见 .npmrc 里 Windows junction 的说明），因此外壳的类型检查会读到工具包源码；工具包自带的 ambient 声明（如 pdfjs 的动态 import）只有在被 include 时才进入 program。",
+  "include": ["src", "../../packages/tool-diff/src/vite-env.d.ts"]
+}

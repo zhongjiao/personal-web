@@ -1,0 +1,23 @@
+{
+  "name": "@pmp/diff-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "差异对比工具的后端 API：diff 数据中转、DOCX/PDF 文本提取、.doc → .docx 转换",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mammoth": "^1.8.0",
+    "multer": "^1.4.5-lts.1",
+    "nanoid": "^3.3.7",
+    "pdf-parse": "^1.1.1",
+    "word-extractor": "^1.0.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

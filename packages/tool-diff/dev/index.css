@@ -1,0 +1,6 @@
+@import 'tailwindcss';
+@import '../../ui/src/styles/theme.css';
+
+/* monorepo：Tailwind 默认只扫描 vite root，需显式声明各包源码目录 */
+@source '../src';
+@source '../../ui/src';
