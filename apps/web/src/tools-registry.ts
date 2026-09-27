@@ -3,6 +3,7 @@ import { toolManifest as beauty } from '@pmp/tool-beauty/manifest';
 import { toolManifest as konvaImage } from '@pmp/tool-konva-image/manifest';
 import { toolManifest as diff } from '@pmp/tool-diff/manifest';
 import { toolManifest as photoshop } from '@pmp/tool-photoshop/manifest';
+import { toolManifest as compositor } from '@pmp/tool-compositor/manifest';
 
 /**
  * 工具注册表。
@@ -12,6 +13,6 @@ import { toolManifest as photoshop } from '@pmp/tool-photoshop/manifest';
  *   1) 新建/安装一个工具包并在其 `src/manifest.ts` 里 defineTool
  *   2) 在下面的数组里加一行
  */
-export const tools: ToolDef[] = [beauty, konvaImage, diff, photoshop];
+export const tools: ToolDef[] = [beauty, konvaImage, diff, photoshop, compositor];
 
 export type { ToolDef };

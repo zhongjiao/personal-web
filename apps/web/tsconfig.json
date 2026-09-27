@@ -16,7 +16,9 @@
       "@pmp/tool-photoshop/manifest": ["../../packages/tool-photoshop/src/manifest.ts"],
       "@pmp/tool-photoshop": ["../../packages/tool-photoshop/src/index.ts"],
       "@pmp/tool-diff/manifest": ["../../packages/tool-diff/src/manifest.ts"],
-      "@pmp/tool-diff": ["../../packages/tool-diff/src/index.ts"]
+      "@pmp/tool-diff": ["../../packages/tool-diff/src/index.ts"],
+      "@pmp/tool-compositor/manifest": ["../../packages/tool-compositor/src/manifest.ts"],
+      "@pmp/tool-compositor": ["../../packages/tool-compositor/src/index.ts"]
     }
   },
   "//": "paths 直指各包 src（见 .npmrc 里 Windows junction 的说明），因此外壳的类型检查会读到工具包源码；工具包自带的 ambient 声明（如 pdfjs 的动态 import）只有在被 include 时才进入 program。",

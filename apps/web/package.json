@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@pmp/tool-beauty": "workspace:*",
+    "@pmp/tool-compositor": "workspace:*",
     "@pmp/tool-contract": "workspace:*",
     "@pmp/tool-diff": "workspace:*",
     "@pmp/tool-konva-image": "workspace:*",

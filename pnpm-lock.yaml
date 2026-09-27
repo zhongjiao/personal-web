@@ -45,6 +45,9 @@ importers:
       '@pmp/tool-beauty':
         specifier: workspace:*
         version: link:../../packages/tool-beauty
+      '@pmp/tool-compositor':
+        specifier: workspace:*
+        version: link:../../packages/tool-compositor
       '@pmp/tool-contract':
         specifier: workspace:*
         version: link:../../packages/tool-contract
@@ -137,6 +140,49 @@ importers:
       '@pmp/image-kit':
         specifier: workspace:*
         version: link:../image-kit
+      '@pmp/tool-contract':
+        specifier: workspace:*
+        version: link:../tool-contract
+      '@pmp/ui':
+        specifier: workspace:*
+        version: link:../ui
+      lucide-react:
+        specifier: ^0.460.0
+        version: 0.460.0(react@19.3.0)
+      sonner:
+        specifier: ^1.7.0
+        version: 1.7.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+    devDependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.0.0
+        version: 4.3.0(vite@7.3.3(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.15
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.15)
+      '@vitejs/plugin-react':
+        specifier: ^4.3.4
+        version: 4.7.0(vite@7.3.3(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0))
+      react:
+        specifier: ^19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.3.0
+        version: 19.3.0(react@19.3.0)
+      tailwindcss:
+        specifier: ^4.0.0
+        version: 4.3.0
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vite:
+        specifier: ^7.0.0
+        version: 7.3.3(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)
+
+  packages/tool-compositor:
+    dependencies:
       '@pmp/tool-contract':
         specifier: workspace:*
         version: link:../tool-contract
