@@ -15,7 +15,14 @@ import path from 'node:path';
 export function pmpAliases(repoRoot) {
   const p = (...seg) => path.join(repoRoot, 'packages', ...seg);
 
-  const tools = ['tool-beauty', 'tool-konva-image', 'tool-photoshop', 'tool-diff', 'tool-compositor'];
+  const tools = [
+    'tool-beauty',
+    'tool-konva-image',
+    'tool-photoshop',
+    'tool-diff',
+    'tool-compositor',
+    'tool-json'
+  ];
 
   return [
     { find: '@pmp/ui/styles/theme.css', replacement: p('ui', 'src/styles/theme.css') },

@@ -15,6 +15,7 @@
     "@pmp/tool-compositor": "workspace:*",
     "@pmp/tool-contract": "workspace:*",
     "@pmp/tool-diff": "workspace:*",
+    "@pmp/tool-json": "workspace:*",
     "@pmp/tool-konva-image": "workspace:*",
     "@pmp/tool-photoshop": "workspace:*",
     "@pmp/ui": "workspace:*",

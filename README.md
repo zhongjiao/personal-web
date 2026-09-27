@@ -19,6 +19,7 @@ pnpm workspace + 多包（monorepo）：**每个工具是一个可以独立开�
 │   ├── tool-konva-image/           @pmp/tool-konva-image     Konva 图片编辑器
 │   ├── tool-photoshop/             @pmp/tool-photoshop       Photoshop 基础
 │   ├── tool-diff/                  @pmp/tool-diff            差异对比（含 samples/ 与生成脚本）
+│   ├── tool-json/                  @pmp/tool-json            JSON 查看器 + HTML 字符串预览
 │   └── …                           新增工具在此建包（见「添加新工具」）
 ├── servers/
 │   └── diff-api/                   @pmp/diff-api       差异对比的后端 API（Node.js + Express）
@@ -201,6 +202,30 @@ pnpm 的 workspace 依赖默认用 junction/symlink 链接，Windows 在无开�
 - 状态栏实时显示左右字符数 / 当前语言
 - 组件样式采用 **CSS Modules** 局部作用域，不污染全局
 
+### JSON / HTML 工具 (JSON Viewer & HTML Preview)
+
+路径：`/tools/json` · 包：`packages/tool-json/`（`src/page.tsx` + `src/components/json-pane.tsx`、`html-pane.tsx`、`json-tree-view.tsx`、`code-editor.tsx` + `src/lib/json-utils.ts`、`json-tree.ts`、`html-doc.ts`）
+
+两个面板，**全部在浏览器本地完成**：Monaco 用 `node_modules` 里的本地副本（`loader.config({ monaco })` + 自注册 Web Worker），不请求 CDN；预览页不联网、不上传。
+
+**JSON 查看器**
+
+- 代码 / 并排 / 树形三种视图；左侧 Monaco 负责语法高亮与代码折叠，右侧是自绘的可折叠树
+- **格式化**（缩进 2 / 4 空格 / Tab 可选）、**压缩**、**按 key 递归排序**（数组顺序保持不变，不破坏业务语义）
+- **折叠树**：按类型着色、`{…} 3 项` 摘要、点击键名复制路径（`$.a.b[0]` 形式）、hover 复制该节点的 JSON、展开 / 折叠全部；关键字搜索会自动展开命中节点的祖先链并高亮，同时显示匹配数量
+- **宽松模式**：手写扫描器（字符串感知，不会误伤 `"含,}的字符串"`）去掉 `//`、`/* */` 注释与尾随逗号，VSCode 的 `settings.json` 这类 JSONC 直接粘进来就能看；严格模式解析失败时给出「第 N 行，第 M 列」并附「按宽松模式重试」
+- **转义 / 去转义**（`\n \t \" \uXXXX \xHH`）、导入 `.json`、复制、导出、清空、示例
+- 状态栏实时显示节点数 / 深度 / 对象数 / 数组数 / 字节数 / 行数；建树有 20000 节点预算，超出会截断并提示
+
+**HTML 字符串预览**
+
+- 左源码右预览（也可只看源码 / 只看预览）；实时预览可关闭，改为手动「刷新」
+- 预览跑在**不带 `allow-same-origin`** 的 sandbox iframe 里：预览页拿不到本应用的 cookie / localStorage；「允许脚本」可一键关闭（sandbox 不再授予 `allow-scripts`）
+- 注入一段桥接脚本（纯 ES5），把预览页的 `console.log/info/warn/error/debug` 与 `window.onerror` / `unhandledrejection` postMessage 回父页，显示在下方**控制台**（按等级着色、可清空）
+- 片段自动补全 `<!DOCTYPE html>` 外壳；完整文档只在 `<meta charset>`（没有则 `<head>`）之后注入桥接脚本 —— 既不破坏排版，也不会把字符集声明挤出前 1024 字节
+- 设备宽度预设（自适应 / 375 / 768 / 1024 / 1440）、新窗口打开（Blob URL）、导出 `.html`、复制、导入、去转义、示例
+- **HTML 美化**：只在块级标签处换行，行内内容整块保持一行（行内元素之间凭空多出的换行会在浏览器里变成可见空隙，这里不会），`script / style / pre / textarea` 内容完全原样
+
 ## 快速开始
 
 ```bash
@@ -221,6 +246,7 @@ pnpm --filter @pmp/tool-beauty dev          # http://localhost:5181  美图工�
 pnpm --filter @pmp/tool-konva-image dev     # http://localhost:5182  Konva 图片编辑器
 pnpm --filter @pmp/tool-photoshop dev       # http://localhost:5183  Photoshop 基础（/api 已代理到 3002）
 pnpm --filter @pmp/tool-diff dev            # http://localhost:5184  差异对比（/api 已代理到 3001）
+pnpm --filter @pmp/tool-json dev            # http://localhost:5185  JSON / HTML 工具
 ```
 
 ## 常用命令
