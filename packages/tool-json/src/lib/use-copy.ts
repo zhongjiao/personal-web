@@ -1,12 +1,13 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
-import { copyText } from './clipboard';
+import { useCopy as useBaseCopy } from '@pmp/ui';
 
-/** 统一的「复制 + 提示」入口，避免每个按钮都写一遍 try/catch 与 toast */
+/** 复制 + sonner 提示（@pmp/ui 只提供复制与回调，提示由各工具自己决定） */
 export function useCopy() {
-  return useCallback(async (text: string, label = '已复制到剪贴板') => {
-    const ok = await copyText(text);
-    if (ok) toast.success(label);
-    else toast.error('复制失败，请手动选择内容复制');
+  const notify = useCallback((message: string, level: 'success' | 'error') => {
+    if (level === 'success') toast.success(message);
+    else toast.error(message);
   }, []);
+
+  return useBaseCopy(notify);
 }

@@ -21,7 +21,8 @@ export function pmpAliases(repoRoot) {
     'tool-photoshop',
     'tool-diff',
     'tool-compositor',
-    'tool-json'
+    'tool-json',
+    'tool-file-html'
   ];
 
   return [

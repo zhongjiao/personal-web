@@ -16,7 +16,18 @@ import {
   TextQuote,
   Trash2
 } from 'lucide-react';
-import { Badge, Button, cn, Select, Separator, ToggleGroup, ToggleGroupItem } from '@pmp/ui';
+import {
+  Badge,
+  Button,
+  cn,
+  downloadText,
+  formatBytes,
+  Select,
+  Separator,
+  timestampName,
+  ToggleGroup,
+  ToggleGroupItem
+} from '@pmp/ui';
 import { CodeEditor } from './code-editor';
 import {
   PREVIEW_MESSAGE_SOURCE,
@@ -29,9 +40,7 @@ import {
 } from '../lib/html-doc';
 import { decodeEscapes, hasEscapes } from '../lib/escape';
 import { SAMPLE_HTML } from '../lib/samples';
-import { downloadText, timestampName } from '../lib/download';
 import { useCopy } from '../lib/use-copy';
-import { formatBytes } from '../lib/json-utils';
 import type { MonacoTheme } from '../lib/use-monaco-theme';
 
 type HtmlView = 'split' | 'code' | 'preview';

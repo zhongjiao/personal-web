@@ -20,6 +20,7 @@ pnpm workspace + 多包（monorepo）：**每个工具是一个可以独立开�
 │   ├── tool-photoshop/             @pmp/tool-photoshop       Photoshop 基础
 │   ├── tool-diff/                  @pmp/tool-diff            差异对比（含 samples/ 与生成脚本）
 │   ├── tool-json/                  @pmp/tool-json            JSON 查看器 + HTML 字符串预览
+│   ├── tool-file-html/             @pmp/tool-file-html       文档转 HTML（PDF/Word/Excel/PPT）
 │   └── …                           新增工具在此建包（见「添加新工具」）
 ├── servers/
 │   └── diff-api/                   @pmp/diff-api       差异对比的后端 API（Node.js + Express）
@@ -226,6 +227,33 @@ pnpm 的 workspace 依赖默认用 junction/symlink 链接，Windows 在无开�
 - 设备宽度预设（自适应 / 375 / 768 / 1024 / 1440）、新窗口打开（Blob URL）、导出 `.html`、复制、导入、去转义、示例
 - **HTML 美化**：只在块级标签处换行，行内内容整块保持一行（行内元素之间凭空多出的换行会在浏览器里变成可见空隙，这里不会），`script / style / pre / textarea` 内容完全原样
 
+### 文档转 HTML (File → HTML)
+
+路径：`/tools/file-html` · 包：`packages/tool-file-html/`（`src/page.tsx` + `src/components/drop-zone.tsx`、`preview-panel.tsx`、`result-panel.tsx` + `src/lib/convert.ts`、`html-shell.ts`、`zip.ts`、`dom.ts`、`converters/*`）
+
+把 PDF / Word / Excel / PowerPoint / CSV / 图片转成**自包含的单文件 HTML**：右侧实时预览（iframe 沙箱、缩放），左侧给出体积、页数等统计与「下载 HTML / 复制 HTML / 新窗口打开」。解析全部在浏览器本地完成，没有上传接口。
+
+| 输入 | 做法 | 说明 |
+|---|---|---|
+| **PDF** | pdf.js，三种输出方式（面板里切换） | **文本 + 定位**（默认）：取文本层按原始坐标输出真实 DOM，字号用 `cqw` 随容器等比缩放，文字可选中可搜索、体积小一个数量级；**图片**：逐页渲染 canvas 内联（1x~3x、JPEG 质量可选），版式最忠实；**纯文本**：按行重排，便于复制再加工。三种模式共用「最多页数」上限；定位模式下**没有文本层的页（扫描页）会自动回退成图片**，所以图片型 PDF 也不会转出空白 |
+| **Word** `.docx/.docm` | mammoth → HTML | 标题、列表、表格、图片（自动转 data URI）都保留 |
+| **Word** `.doc` | 复用 `servers/diff-api` 的 LibreOffice 路由转成 docx | 唯一需要本地服务的格式，未启动时会给出明确提示 |
+| **Excel** `.xlsx/.xlsm` | jszip 解 OOXML，自己解析 sharedStrings / styles / worksheet | 多工作表 CSS 页签、合并单元格（colspan/rowspan）、列宽、日期序列号、千分位/百分比/货币格式、公式与错误值；隐藏行不渲染，超 5000 行 / 200 列截断 |
+| **PowerPoint** `.pptx/.pptm` | jszip 解 OOXML，按原始坐标还原 | 文本框按百分比绝对定位、字号用 `cqw` 等比缩放，读取版式占位符字号继承；图片/表格/项目符号/幻灯片背景都还原；图表、SmartArt、音视频与动画会跳过并在面板里列出 |
+| **CSV/TSV/文本/JSON/图片/HTML** | 无依赖的轻量转换 | 分隔符自动识别、引号与字段内换行按 RFC 4180 处理；图片内联为 data URI；HTML 文件原样输出 |
+
+产物的样式全部内联、资源全部是 data URI，`@media print` 也做了处理（Excel 页签在打印时会展开成全部工作表），离线打开即可阅读。
+
+> 少装依赖的取舍：xlsx / pptx 没有引 SheetJS 或 pptx 解析库，而是用仓库已有的 `jszip` + 浏览器原生 `DOMParser` 解析 OOXML。
+> 解析器都是纯函数式模块（`converters/*.ts`），因此可以在 Node 里用 `@xmldom/xmldom` 顶替 `DOMParser` 直接跑回归测试。
+>
+> PDF 为什么不能直接产出「语义化 HTML」：PDF 是页面描述格式，文字是按绘制指令画到具体坐标上的，
+> 没有段落 / 标题 / 表格结构，也不保证阅读顺序（多栏、页眉页脚混在同一坐标空间）。
+> 因此「文本 + 定位」走的是 pdf.js 官方 text layer 的思路——把每个文本块用 `Util.transform`
+> 换算到页面坐标后绝对定位，视觉位置准、文字真实可选；而「还原成干净语义标签」只能靠启发式重建
+> （Adobe「导出为 HTML」、pdf2htmlEX 这类工具在做，仍需人工校对），不在本工具范围内。
+> 另外两种常见的坑：PDF 内嵌字体常是子集且可能缺 `ToUnicode` 表（此时抽不出字符），扫描件则完全没有文本层。
+
 ## 快速开始
 
 ```bash
@@ -247,6 +275,7 @@ pnpm --filter @pmp/tool-konva-image dev     # http://localhost:5182  Konva 图�
 pnpm --filter @pmp/tool-photoshop dev       # http://localhost:5183  Photoshop 基础（/api 已代理到 3002）
 pnpm --filter @pmp/tool-diff dev            # http://localhost:5184  差异对比（/api 已代理到 3001）
 pnpm --filter @pmp/tool-json dev            # http://localhost:5185  JSON / HTML 工具
+pnpm --filter @pmp/tool-file-html dev       # http://localhost:5186  文档转 HTML（/api 已代理到 3001）
 ```
 
 ## 常用命令

@@ -2,7 +2,6 @@ export { default } from './page';
 export { toolManifest } from './manifest';
 export {
   computeStats,
-  formatBytes,
   formatJson,
   minifyJson,
   parseJson,

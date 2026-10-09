@@ -1,0 +1,16 @@
+{
+  "//": "只产出 d.ts。paths 指向兄弟包的 dist（而不是 src）：emitDeclarationOnly 要求所有输入都在 rootDir 内，.d.ts 不受此限制。",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "paths": {
+      "@pmp/ui": ["../ui/dist/index.d.ts"],
+      "@pmp/tool-contract": ["../tool-contract/dist/index.d.ts"]
+    }
+  },
+  "include": ["src"]
+}

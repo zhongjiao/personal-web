@@ -1,5 +1,8 @@
 /* 工具函数 */
 export { cn } from './lib/utils';
+export { copyText } from './lib/clipboard';
+export { downloadBlob, downloadText, formatBytes, stripExtension, timestampName } from './lib/download';
+export { useCopy } from './lib/use-copy';
 
 /* shadcn 风格基础组件 */
 export { Badge, badgeVariants } from './components/ui/badge';

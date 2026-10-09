@@ -17,21 +17,24 @@ import {
   TriangleAlert,
   WandSparkles
 } from 'lucide-react';
-import { Badge, Button, cn, Select, Separator, ToggleGroup, ToggleGroupItem } from '@pmp/ui';
+import {
+  Badge,
+  Button,
+  cn,
+  downloadText,
+  formatBytes,
+  Select,
+  Separator,
+  timestampName,
+  ToggleGroup,
+  ToggleGroupItem
+} from '@pmp/ui';
 import { CodeEditor } from './code-editor';
 import { JsonTreeView } from './json-tree-view';
-import {
-  computeStats,
-  formatBytes,
-  formatJson,
-  minifyJson,
-  parseJson,
-  sortKeysDeep
-} from '../lib/json-utils';
+import { computeStats, formatJson, minifyJson, parseJson, sortKeysDeep } from '../lib/json-utils';
 import { decodeEscapes, encodeAsJsonString, hasEscapes } from '../lib/escape';
 import { buildTree } from '../lib/json-tree';
 import { SAMPLE_JSON } from '../lib/samples';
-import { downloadText, timestampName } from '../lib/download';
 import { useCopy } from '../lib/use-copy';
 import type { MonacoTheme } from '../lib/use-monaco-theme';
 
