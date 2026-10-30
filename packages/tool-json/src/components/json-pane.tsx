@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
+  Ampersand,
   ArrowDownAZ,
   Braces,
   CircleCheck,
@@ -15,6 +16,7 @@ import {
   Sparkles,
   TextQuote,
   TriangleAlert,
+  Undo2,
   WandSparkles
 } from 'lucide-react';
 import {
@@ -32,7 +34,14 @@ import {
 import { CodeEditor } from './code-editor';
 import { JsonTreeView } from './json-tree-view';
 import { computeStats, formatJson, minifyJson, parseJson, sortKeysDeep } from '../lib/json-utils';
-import { decodeEscapes, encodeAsJsonString, hasEscapes } from '../lib/escape';
+import {
+  decodeEscapes,
+  decodeHtmlEntities,
+  encodeAsJsonString,
+  encodeHtmlEntities,
+  hasEscapes,
+  hasHtmlEntities
+} from '../lib/escape';
 import { buildTree } from '../lib/json-tree';
 import { SAMPLE_JSON } from '../lib/samples';
 import { useCopy } from '../lib/use-copy';
@@ -104,6 +113,20 @@ export function JsonPane({ theme }: { theme: MonacoTheme }) {
     }
     setText(decodeEscapes(text));
     toast.success('已去除转义');
+  };
+
+  const handleEncodeEntities = () => {
+    setText(encodeHtmlEntities(text));
+    toast.success('已转成 HTML 实体');
+  };
+
+  const handleDecodeEntities = () => {
+    if (!hasHtmlEntities(text)) {
+      toast.info('没检测到 HTML 实体');
+      return;
+    }
+    setText(decodeHtmlEntities(text));
+    toast.success('已还原 HTML 实体');
   };
 
   const handleClear = () => setText('');
@@ -206,6 +229,27 @@ export function JsonPane({ theme }: { theme: MonacoTheme }) {
         >
           <TextQuote />
           去转义
+        </Button>
+
+        <Separator orientation="vertical" className="h-5" />
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleEncodeEntities}
+          title={'把 & < > " \' 转成 HTML 实体（&amp; &lt; &gt; &quot; &#39;）'}
+        >
+          <Ampersand />
+          转实体
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDecodeEntities}
+          title="还原 &amp; &lt; &#39; &#x4e2d; 这类 HTML 实体"
+        >
+          <Undo2 />
+          去实体
         </Button>
 
         <Separator orientation="vertical" className="h-5" />

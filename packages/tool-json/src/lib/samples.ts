@@ -1,5 +1,53 @@
 /** 首次进入 / 点「示例」时填充的内容 */
 
+export const SAMPLE_MARKDOWN = `# 项目说明
+
+一个**零依赖**的 Markdown 子集渲染器，用来做实时预览。支持 *斜体*、**粗体**、~~删除线~~、
+\`行内代码\`，以及 [链接](https://www.example.com) 和裸链接 https://www.example.com 。
+
+> 引用块里也可以包含其它块级元素：
+>
+> 1. 有序列表
+> 2. 第二项
+
+## 能力清单
+
+- 标题（ATX 与 \`===\` / \`---\` 两种写法）
+- 列表（可嵌套，支持任务列表）
+  - 二级条目
+- 表格（含对齐）
+- 代码块（语言标记会显示在右上角）
+
+### 任务列表
+
+- [x] 解析块级结构
+- [x] 行内语法与转义
+- [ ] 语法高亮（暂不支持）
+
+### 表格
+
+| 能力 | 状态 | 备注 |
+| :--- | :--: | ---: |
+| 标题 | 支持 | 带 anchor id |
+| 表格 | 支持 | GFM 对齐 |
+| 脚注 | 不支持 | 保持轻量 |
+
+### 代码块
+
+\`\`\`ts
+export function renderMarkdown(source: string) {
+  return { html: parse(source), stats: count(source) };
+}
+\`\`\`
+
+---
+
+参考式链接也支持：[文档][doc]。
+
+[doc]: https://commonmark.org "CommonMark 规范"
+`;
+
+
 export const SAMPLE_JSON = `{
   "name": "pmp-management",
   "version": "1.0.0",

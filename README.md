@@ -19,7 +19,7 @@ pnpm workspace + 多包（monorepo）：**每个工具是一个可以独立开�
 │   ├── tool-konva-image/           @pmp/tool-konva-image     Konva 图片编辑器
 │   ├── tool-photoshop/             @pmp/tool-photoshop       Photoshop 基础
 │   ├── tool-diff/                  @pmp/tool-diff            差异对比（含 samples/ 与生成脚本）
-│   ├── tool-json/                  @pmp/tool-json            JSON 查看器 + HTML 字符串预览
+│   ├── tool-json/                  @pmp/tool-json            JSON 查看器 + HTML / Markdown 预览
 │   ├── tool-file-html/             @pmp/tool-file-html       文档转 HTML（PDF/Word/Excel/PPT）
 │   └── …                           新增工具在此建包（见「添加新工具」）
 ├── servers/
@@ -203,11 +203,11 @@ pnpm 的 workspace 依赖默认用 junction/symlink 链接，Windows 在无开�
 - 状态栏实时显示左右字符数 / 当前语言
 - 组件样式采用 **CSS Modules** 局部作用域，不污染全局
 
-### JSON / HTML 工具 (JSON Viewer & HTML Preview)
+### JSON / HTML / Markdown 工具
 
-路径：`/tools/json` · 包：`packages/tool-json/`（`src/page.tsx` + `src/components/json-pane.tsx`、`html-pane.tsx`、`json-tree-view.tsx`、`code-editor.tsx` + `src/lib/json-utils.ts`、`json-tree.ts`、`html-doc.ts`）
+路径：`/tools/json` · 包：`packages/tool-json/`（`src/page.tsx` + `src/components/json-pane.tsx`、`html-pane.tsx`、`markdown-pane.tsx`、`json-tree-view.tsx`、`code-editor.tsx` + `src/lib/json-utils.ts`、`json-tree.ts`、`html-doc.ts`、`markdown.ts`、`markdown-doc.ts`）
 
-两个面板，**全部在浏览器本地完成**：Monaco 用 `node_modules` 里的本地副本（`loader.config({ monaco })` + 自注册 Web Worker），不请求 CDN；预览页不联网、不上传。
+三个面板，**全部在浏览器本地完成**：Monaco 用 `node_modules` 里的本地副本（`loader.config({ monaco })` + 自注册 Web Worker），不请求 CDN；预览页不联网、不上传。
 
 **JSON 查看器**
 
@@ -215,7 +215,7 @@ pnpm 的 workspace 依赖默认用 junction/symlink 链接，Windows 在无开�
 - **格式化**（缩进 2 / 4 空格 / Tab 可选）、**压缩**、**按 key 递归排序**（数组顺序保持不变，不破坏业务语义）
 - **折叠树**：按类型着色、`{…} 3 项` 摘要、点击键名复制路径（`$.a.b[0]` 形式）、hover 复制该节点的 JSON、展开 / 折叠全部；关键字搜索会自动展开命中节点的祖先链并高亮，同时显示匹配数量
 - **宽松模式**：手写扫描器（字符串感知，不会误伤 `"含,}的字符串"`）去掉 `//`、`/* */` 注释与尾随逗号，VSCode 的 `settings.json` 这类 JSONC 直接粘进来就能看；严格模式解析失败时给出「第 N 行，第 M 列」并附「按宽松模式重试」
-- **转义 / 去转义**（`\n \t \" \uXXXX \xHH`）、导入 `.json`、复制、导出、清空、示例
+- **转义 / 去转义**（JSON 字符串字面量：`\n \t \" \uXXXX \xHH`）与**转实体 / 去实体**（HTML 实体：`&amp; &lt; &gt; &quot; &#39;`；还原支持命名实体与 `&#123;` / `&#x4e2d;` 数字实体，只解一层以保证「转 → 去」严格还原）；另有导入 `.json`、复制、导出、清空、示例
 - 状态栏实时显示节点数 / 深度 / 对象数 / 数组数 / 字节数 / 行数；建树有 20000 节点预算，超出会截断并提示
 
 **HTML 字符串预览**
@@ -226,6 +226,18 @@ pnpm 的 workspace 依赖默认用 junction/symlink 链接，Windows 在无开�
 - 片段自动补全 `<!DOCTYPE html>` 外壳；完整文档只在 `<meta charset>`（没有则 `<head>`）之后注入桥接脚本 —— 既不破坏排版，也不会把字符集声明挤出前 1024 字节
 - 设备宽度预设（自适应 / 375 / 768 / 1024 / 1440）、新窗口打开（Blob URL）、导出 `.html`、复制、导入、去转义、示例
 - **HTML 美化**：只在块级标签处换行，行内内容整块保持一行（行内元素之间凭空多出的换行会在浏览器里变成可见空隙，这里不会），`script / style / pre / textarea` 内容完全原样
+
+**Markdown 预览**
+
+仓库里没有 markdown 解析库，也不想为「预览」再装一个依赖，所以 `src/lib/markdown.ts` 是一个**零依赖的 CommonMark + 常用 GFM 子集**渲染器（纯函数，可在 Node 里直接回归测试）：
+
+- 块级：ATX / setext 标题（带 anchor id，重复标题自动去重）、段落、围栏与缩进代码、引用（可嵌套列表）、有序 / 无序 / 任务列表（可嵌套、区分紧凑与松散）、GFM 表格（含对齐与转义 `\|`）、分隔线、原始 HTML 透传
+- 行内：粗体 / 斜体 / 粗斜体 / 删除线 / 行内代码（支持多反引号）/ 链接（内联、引用式 `[t][id]`、自动链接 `<https://…>` 与裸链接）/ 图片 / 硬换行 / 反斜杠转义 / 命名实体还原
+- **安全**：`javascript:` / `vbscript:` / 非图片 `data:` 链接一律降级为 `#`；原始 HTML 会清掉 `<script>`、`<iframe>`、`on*=` 事件与 `javascript:` 属性，预览 iframe 另外还加了空 `sandbox`（脚本不执行）
+- **界面**：分栏 / 源码 / 预览三种视图，实时渲染；「软换行 → `<br>`」可切换 README 风格与评论风格；信息条实时显示字符 / 词（中文按字计）/ 行 / 标题 / 代码块 / 表格 / 任务数
+- **拖入导入**：`.md / .markdown / .mdx / .txt` 可以直接拖到面板任意位置（编辑器、预览区都行），拖入时覆盖一层「松开以导入」遮罩，扩展名不匹配会提示；遮罩同时避免 drop 被 Monaco 的「拖入编辑器」或预览 iframe 吞掉
+- **导出**：`复制 Markdown`、`复制 HTML`、`导出 .html`、新窗口打开。导出的是一份**单文件 HTML**：样式内联、无脚本，深浅配色跟随当前主题（`<html class="dark">`），并带打印样式
+- 不支持（刻意的取舍）：脚注、定义列表、数学公式、目录生成、代码语法高亮（代码块只保留语言标记，用 `pre[data-lang]` 的角标展示）
 
 ### 文档转 HTML (File → HTML)
 
@@ -274,7 +286,7 @@ pnpm --filter @pmp/tool-beauty dev          # http://localhost:5181  美图工�
 pnpm --filter @pmp/tool-konva-image dev     # http://localhost:5182  Konva 图片编辑器
 pnpm --filter @pmp/tool-photoshop dev       # http://localhost:5183  Photoshop 基础（/api 已代理到 3002）
 pnpm --filter @pmp/tool-diff dev            # http://localhost:5184  差异对比（/api 已代理到 3001）
-pnpm --filter @pmp/tool-json dev            # http://localhost:5185  JSON / HTML 工具
+pnpm --filter @pmp/tool-json dev            # http://localhost:5185  JSON / HTML / Markdown 工具
 pnpm --filter @pmp/tool-file-html dev       # http://localhost:5186  文档转 HTML（/api 已代理到 3001）
 ```
 

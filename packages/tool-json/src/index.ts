@@ -13,4 +13,21 @@ export {
 } from './lib/json-utils';
 export { buildTree, findMatches, type JsonTreeNode, type BuildTreeResult } from './lib/json-tree';
 export { buildPreviewDocument, formatHtml, isFullDocument } from './lib/html-doc';
-export { decodeEscapes, encodeAsJsonString, hasEscapes } from './lib/escape';
+export { buildMarkdownDocument } from './lib/markdown-doc';
+export {
+  renderMarkdown,
+  type MarkdownHeading,
+  type MarkdownOptions,
+  type MarkdownResult,
+  type MarkdownStats
+} from './lib/markdown';
+export {
+  decodeEscapes,
+  decodeHtmlEntities,
+  encodeAsJsonString,
+  encodeHtmlEntities,
+  escapeAttr,
+  escapeHtml,
+  hasEscapes,
+  hasHtmlEntities
+} from './lib/escape';

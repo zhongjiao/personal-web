@@ -4,7 +4,7 @@ import type { MonacoTheme } from '../lib/use-monaco-theme';
 
 interface CodeEditorProps {
   value: string;
-  language: 'json' | 'html';
+  language: 'json' | 'html' | 'markdown';
   theme: MonacoTheme;
   onChange: (value: string) => void;
 }

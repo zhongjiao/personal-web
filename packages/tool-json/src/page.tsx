@@ -2,15 +2,20 @@ import { useState } from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@pmp/ui';
 import { HtmlPane } from './components/html-pane';
 import { JsonPane } from './components/json-pane';
+import { MarkdownPane } from './components/markdown-pane';
 import { useMonacoTheme } from './lib/use-monaco-theme';
 
-type PaneId = 'json' | 'html';
+type PaneId = 'json' | 'html' | 'markdown';
 
-export default function JsonHtmlToolPage() {
+export default function TextStyleToolPage() {
   const theme = useMonacoTheme();
   const [pane, setPane] = useState<PaneId>('json');
   // 首次进入只挂载当前面板，切过去之后再保留挂载 —— 来回切换不丢内容与展开状态
-  const [mounted, setMounted] = useState<Record<PaneId, boolean>>({ json: true, html: false });
+  const [mounted, setMounted] = useState<Record<PaneId, boolean>>({
+    json: true,
+    html: false,
+    markdown: false
+  });
 
   const select = (id: PaneId) => {
     setPane(id);
@@ -28,6 +33,7 @@ export default function JsonHtmlToolPage() {
         >
           <ToggleGroupItem value="json">JSON 查看器</ToggleGroupItem>
           <ToggleGroupItem value="html">HTML 预览</ToggleGroupItem>
+          <ToggleGroupItem value="markdown">Markdown 预览</ToggleGroupItem>
         </ToggleGroup>
         <span className="text-xs text-[var(--color-muted-foreground)]">
           解析、格式化与渲染全部在浏览器本地完成，不联网、不上传
@@ -39,6 +45,9 @@ export default function JsonHtmlToolPage() {
       </div>
       <div className={pane === 'html' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
         {mounted.html && <HtmlPane theme={theme} />}
+      </div>
+      <div className={pane === 'markdown' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
+        {mounted.markdown && <MarkdownPane theme={theme} />}
       </div>
     </div>
   );
